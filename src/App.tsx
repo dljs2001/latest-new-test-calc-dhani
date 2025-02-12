@@ -20,6 +20,15 @@ interface Payment {
   endingBalance: number;
 }
 
+function formatIndianNumber(num: number): string {
+  if (isNaN(num)) return '0';
+  const value = Math.round(num);
+  return new Intl.NumberFormat('en-IN', {
+    maximumFractionDigits: 0,
+    useGrouping: true
+  }).format(value);
+}
+
 function App() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [loanDetails, setLoanDetails] = useState<LoanDetails>({
@@ -49,7 +58,7 @@ function App() {
       html2canvas: { 
         scale: 2,
         useCORS: true,
-        windowWidth: 1200 // Force desktop view width
+        windowWidth: 1200
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
@@ -95,7 +104,7 @@ function App() {
 
   const schedule = calculateAmortizationSchedule(loanDetails);
   const totalInterest = schedule.reduce((sum, payment) => sum + payment.interest, 0);
-  const totalCost = loanDetails.loanAmount + totalInterest;
+  const totalCost = Number(loanDetails.loanAmount) + totalInterest;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -129,64 +138,64 @@ function App() {
               <h2 className="text-2xl font-bold mb-4">LOAN VALUES</h2>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <label htmlFor="loanAmount" className="text-lg font-bold">Loan Amount</label>
+                  <label htmlFor="loanAmount" className="text-xl font-bold">Loan Amount</label>
                   <div className="flex items-center">
-                    <span className="mr-2 text-lg">₹</span>
+                    <span className="mr-2 text-xl">₹</span>
                     <input
                       type="number"
                       id="loanAmount"
                       name="loanAmount"
                       value={loanDetails.loanAmount}
                       onChange={handleInputChange}
-                      className="w-32 px-3 py-2 text-black rounded font-bold text-lg"
+                      className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
                     />
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <label htmlFor="annualInterestRate" className="text-lg font-bold">Annual interest rate</label>
+                  <label htmlFor="annualInterestRate" className="text-xl font-bold">Annual interest rate</label>
                   <div className="flex items-center">
-                    <span className="mr-2 text-lg">%</span>
                     <input
                       type="number"
                       id="annualInterestRate"
                       name="annualInterestRate"
                       value={loanDetails.annualInterestRate}
                       onChange={handleInputChange}
-                      className="w-32 px-3 py-2 text-black rounded font-bold text-lg"
+                      className="w-16 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
                     />
+                    <span className="ml-2 text-xl">%</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
-                  <label htmlFor="loanPeriodYears" className="text-lg font-bold">Loan Period In Years</label>
+                  <label htmlFor="loanPeriodYears" className="text-xl font-bold">Loan Period In Years</label>
                   <input
                     type="number"
                     id="loanPeriodYears"
                     name="loanPeriodYears"
                     value={loanDetails.loanPeriodYears}
                     onChange={handleInputChange}
-                    className="w-32 px-3 py-2 text-black rounded font-bold text-lg"
+                    className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <label htmlFor="startDate" className="text-lg font-bold">Start Date Of Loan</label>
+                  <label htmlFor="startDate" className="text-xl font-bold">Start Date Of Loan</label>
                   <input
                     type="date"
                     id="startDate"
                     name="startDate"
                     value={loanDetails.startDate}
                     onChange={handleInputChange}
-                    className="w-40 px-3 py-2 text-black rounded font-bold text-lg"
+                    className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none"
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <label htmlFor="name" className="text-lg font-bold">Name</label>
+                  <label htmlFor="name" className="text-xl font-bold">Name</label>
                   <input
                     type="text"
                     id="name"
                     name="name"
                     value={loanDetails.name}
                     onChange={handleInputChange}
-                    className="w-40 px-3 py-2 text-black rounded font-bold text-lg"
+                    className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
                   />
                 </div>
               </div>
@@ -195,23 +204,23 @@ function App() {
             <div className="bg-[#8B0000] rounded-lg p-6 text-white">
               <h2 className="text-2xl font-bold mb-4">LOAN VALUES</h2>
               <div className="space-y-4">
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-xl font-bold">
                   <span>Monthly Payment</span>
-                  <span>₹ {schedule[0]?.payment}</span>
+                  <span>₹ {formatIndianNumber(schedule[0]?.payment)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-xl font-bold">
                   <span>Number Of Payments</span>
                   <span>{schedule.length}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-xl font-bold">
                   <span>Total Interest</span>
-                  <span>₹ {totalInterest}</span>
+                  <span>₹ {formatIndianNumber(totalInterest)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-xl font-bold">
                   <span>Total Cost Of Loan</span>
-                  <span>₹ {totalCost}</span>
+                  <span>₹ {formatIndianNumber(totalCost)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-bold">
+                <div className="flex justify-between text-xl font-bold">
                   <span>Date</span>
                   <span>{new Date(loanDetails.startDate).toLocaleDateString('en-IN')}</span>
                 </div>
@@ -260,19 +269,19 @@ function App() {
                         {payment.paymentDate}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {payment.amount}
+                        ₹ {formatIndianNumber(payment.amount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {payment.payment}
+                        ₹ {formatIndianNumber(payment.payment)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {payment.principal}
+                        ₹ {formatIndianNumber(payment.principal)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {payment.interest}
+                        ₹ {formatIndianNumber(payment.interest)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {payment.endingBalance}
+                        ₹ {formatIndianNumber(payment.endingBalance)}
                       </td>
                     </tr>
                   ))}

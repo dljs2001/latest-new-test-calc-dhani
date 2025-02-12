@@ -129,8 +129,8 @@ function App() {
         </div>
 
         <div ref={contentRef}>
-          <div className="flex justify-center mb-8">
-            <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="h-16 object-contain" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

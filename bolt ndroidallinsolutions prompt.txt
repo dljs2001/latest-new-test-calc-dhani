@@ -1,0 +1,8 @@
+Start Date Of Loan
+02/06/2025
+
+<input type="date" id="startDate" name="startDate"name="startDate"class="w-40 bg-transparent text-white text-xl font-bold focus:outline-none"value="2025-02-06"
+
+and also in <span>6/2/2025
+
+Mske sure it should in this format " 06-Mar-25 "

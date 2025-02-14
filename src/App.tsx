@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { IndianRupee, Printer, ArrowRight } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
@@ -8,6 +8,7 @@ interface LoanDetails {
   loanPeriodYears: number;
   startDate: string;
   name: string;
+  processingFees: number;
 }
 
 interface Payment {
@@ -30,14 +31,17 @@ function formatIndianNumber(num: number): string {
 }
 
 function App() {
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
   const [loanDetails, setLoanDetails] = useState<LoanDetails>({
     loanAmount: 50000,
     annualInterestRate: 4,
     loanPeriodYears: 1,
     startDate: '2025-02-06',
-    name: 'Ananda'
+    name: 'Ananda',
+    processingFees: 1250
   });
+
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -106,6 +110,10 @@ function App() {
   const totalInterest = schedule.reduce((sum, payment) => sum + payment.interest, 0);
   const totalCost = Number(loanDetails.loanAmount) + totalInterest;
 
+  const handlePageChange = () => {
+    setCurrentPage(currentPage === 1 ? 2 : 1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -117,178 +125,234 @@ function App() {
             <Printer size={20} />
             <span>Download PDF</span>
           </button>
-          <a
-            href="https://google.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={handlePageChange}
             className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
           >
-            <span>Next</span>
-            <ArrowRight size={20} />
-          </a>
+            <span>{currentPage === 1 ? 'Next' : 'Previous'}</span>
+            {currentPage === 1 && <ArrowRight size={20} />}
+          </button>
         </div>
 
         <div ref={contentRef}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-            <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
-          </div>
+          {currentPage === 1 ? (
+            <div>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-[#8B0000] rounded-lg p-6 text-white">
-              <h2 className="text-2xl font-bold mb-4">LOAN VALUES</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="loanAmount" className="text-xl font-bold">Loan Amount</label>
-                  <div className="flex items-center">
-                    <span className="mr-2 text-xl">₹</span>
-                    <input
-                      type="number"
-                      id="loanAmount"
-                      name="loanAmount"
-                      value={loanDetails.loanAmount}
-                      onChange={handleInputChange}
-                      className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                    />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
+                  <h2 className="text-2xl font-bold mb-4">LOAN VALUES</h2>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <label htmlFor="loanAmount" className="text-xl font-bold">Loan Amount</label>
+                      <div className="flex items-center">
+                        <span className="mr-2 text-xl">₹</span>
+                        <input
+                          type="number"
+                          id="loanAmount"
+                          name="loanAmount"
+                          value={loanDetails.loanAmount}
+                          onChange={handleInputChange}
+                          className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <label htmlFor="annualInterestRate" className="text-xl font-bold">Annual interest rate</label>
+                      <div className="flex items-center">
+                        <input
+                          type="number"
+                          id="annualInterestRate"
+                          name="annualInterestRate"
+                          value={loanDetails.annualInterestRate}
+                          onChange={handleInputChange}
+                          className="w-16 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                        />
+                        <span className="ml-2 text-xl">%</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <label htmlFor="loanPeriodYears" className="text-xl font-bold">Loan Period In Years</label>
+                      <input
+                        type="number"
+                        id="loanPeriodYears"
+                        name="loanPeriodYears"
+                        value={loanDetails.loanPeriodYears}
+                        onChange={handleInputChange}
+                        className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                      />
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <label htmlFor="startDate" className="text-xl font-bold">Start Date Of Loan</label>
+                      <input
+                        type="date"
+                        id="startDate"
+                        name="startDate"
+                        value={loanDetails.startDate}
+                        onChange={handleInputChange}
+                        className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <label htmlFor="name" className="text-xl font-bold">Name</label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={loanDetails.name}
+                        onChange={handleInputChange}
+                        className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <label htmlFor="annualInterestRate" className="text-xl font-bold">Annual interest rate</label>
-                  <div className="flex items-center">
-                    <input
-                      type="number"
-                      id="annualInterestRate"
-                      name="annualInterestRate"
-                      value={loanDetails.annualInterestRate}
-                      onChange={handleInputChange}
-                      className="w-16 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                    />
-                    <span className="ml-2 text-xl">%</span>
+
+                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
+                  <h2 className="text-2xl font-bold mb-4">LOAN VALUES</h2>
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Monthly Payment</span>
+                      <span>₹ {formatIndianNumber(schedule[0]?.payment)}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Number Of Payments</span>
+                      <span>{schedule.length}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Total Interest</span>
+                      <span>₹ {formatIndianNumber(totalInterest)}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Total Cost Of Loan</span>
+                      <span>₹ {formatIndianNumber(totalCost)}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Date</span>
+                      <span>{new Date(loanDetails.startDate).toLocaleDateString('en-IN')}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <label htmlFor="loanPeriodYears" className="text-xl font-bold">Loan Period In Years</label>
-                  <input
-                    type="number"
-                    id="loanPeriodYears"
-                    name="loanPeriodYears"
-                    value={loanDetails.loanPeriodYears}
-                    onChange={handleInputChange}
-                    className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <label htmlFor="startDate" className="text-xl font-bold">Start Date Of Loan</label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    name="startDate"
-                    value={loanDetails.startDate}
-                    onChange={handleInputChange}
-                    className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none"
-                  />
-                </div>
-                <div className="flex justify-between items-center">
-                  <label htmlFor="name" className="text-xl font-bold">Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={loanDetails.name}
-                    onChange={handleInputChange}
-                    className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                  />
+              </div>
+
+              <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+                <h2 className="text-2xl font-bold text-center py-4 bg-[#8B0000] text-white">
+                  Loan Details Monthly Break-Up
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-[#8B0000]">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Pymnt No.
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Payment Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Amount
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Payment
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Principal
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Interest
+                        </th>
+                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                          Ending Balance
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {schedule.map((payment, index) => (
+                        <tr key={payment.paymentNo} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                            {String(payment.paymentNo).padStart(2, '0')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                            {payment.paymentDate}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                            ₹ {formatIndianNumber(payment.amount)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                            ₹ {formatIndianNumber(payment.payment)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                            ₹ {formatIndianNumber(payment.principal)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                            ₹ {formatIndianNumber(payment.interest)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                            ₹ {formatIndianNumber(payment.endingBalance)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="bg-white p-8 rounded-lg shadow-lg">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
+              </div>
 
-            <div className="bg-[#8B0000] rounded-lg p-6 text-white">
-              <h2 className="text-2xl font-bold mb-4">LOAN VALUES</h2>
-              <div className="space-y-4">
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Monthly Payment</span>
-                  <span>₹ {formatIndianNumber(schedule[0]?.payment)}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
+                  <h2 className="text-2xl font-bold mb-4">LOAN DETAILS</h2>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xl font-bold">Processing Fees</span>
+                      <div className="flex items-center">
+                        <span className="mr-2 text-xl">₹</span>
+                        <input
+                          type="number"
+                          name="processingFees"
+                          value={loanDetails.processingFees}
+                          onChange={handleInputChange}
+                          className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                        />
+                      </div>
+                    </div>
+                    <div className="text-sm italic">
+                      *Processing fees of ₹{formatIndianNumber(loanDetails.processingFees)}* is applicable
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Number Of Payments</span>
-                  <span>{schedule.length}</span>
-                </div>
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Total Interest</span>
-                  <span>₹ {formatIndianNumber(totalInterest)}</span>
-                </div>
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Total Cost Of Loan</span>
-                  <span>₹ {formatIndianNumber(totalCost)}</span>
-                </div>
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Date</span>
-                  <span>{new Date(loanDetails.startDate).toLocaleDateString('en-IN')}</span>
+
+                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
+                  <h2 className="text-2xl font-bold mb-4">LOAN SUMMARY</h2>
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Total Cost of Loan</span>
+                      <span>₹ {formatIndianNumber(totalCost)}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Total Interest</span>
+                      <span>₹ {formatIndianNumber(totalInterest)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-            <h2 className="text-2xl font-bold text-center py-4 bg-[#8B0000] text-white">
-              Loan Details Monthly Break-Up
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-[#8B0000]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Pymnt No.
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Payment Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Payment
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Principal
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Interest
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                      Ending Balance
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {schedule.map((payment, index) => (
-                    <tr key={payment.paymentNo} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        {String(payment.paymentNo).padStart(2, '0')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        {payment.paymentDate}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {formatIndianNumber(payment.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {formatIndianNumber(payment.payment)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {formatIndianNumber(payment.principal)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {formatIndianNumber(payment.interest)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                        ₹ {formatIndianNumber(payment.endingBalance)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="mt-8 text-gray-600">
+                <p className="mb-4">Important Notes:</p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>The processing fee is subject to change based on internal policies.</li>
+                  <li>All amounts are in Indian Rupees (INR).</li>
+                  <li>Interest is calculated on a reducing balance basis.</li>
+                  <li>Pre-closure charges may apply as per terms and conditions.</li>
+                </ul>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

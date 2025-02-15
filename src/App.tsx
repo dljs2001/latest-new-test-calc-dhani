@@ -30,14 +30,23 @@ function formatIndianNumber(num: number): string {
   }).format(value);
 }
 
+function formatDate(date: string): string {
+  const d = new Date(date);
+  return d.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: '2-digit'
+  });
+}
+
 function App() {
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [loanDetails, setLoanDetails] = useState<LoanDetails>({
-    loanAmount: 50000,
+    loanAmount: 500000,
     annualInterestRate: 4,
-    loanPeriodYears: 1,
+    loanPeriodYears: 3,
     startDate: '2025-02-06',
-    name: 'Ananda',
+    name: 'Murali G K',
     processingFees: 1250
   });
 
@@ -113,6 +122,9 @@ function App() {
   const handlePageChange = () => {
     setCurrentPage(currentPage === 1 ? 2 : 1);
   };
+
+  const firstEMIDate = new Date(loanDetails.startDate);
+  firstEMIDate.setMonth(firstEMIDate.getMonth() + 1);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -300,56 +312,94 @@ function App() {
             </div>
           ) : (
             <div className="bg-white p-8 rounded-lg shadow-lg">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
-              </div>
+              <div className="max-w-4xl mx-auto">
+                {/* Logo */}
+                <div className="mb-8">
+                  <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
-                  <h2 className="text-2xl font-bold mb-4">LOAN DETAILS</h2>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xl font-bold">Processing Fees</span>
-                      <div className="flex items-center">
-                        <span className="mr-2 text-xl">₹</span>
-                        <input
-                          type="number"
-                          name="processingFees"
-                          value={loanDetails.processingFees}
-                          onChange={handleInputChange}
-                          className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                        />
-                      </div>
-                    </div>
-                    <div className="text-sm italic">
-                      *Processing fees of ₹{formatIndianNumber(loanDetails.processingFees)}* is applicable
-                    </div>
+                {/* Date and Reference Number */}
+                <div className="text-right mb-6">
+                  <p className="text-[#404040] font-bold">{formatDate(loanDetails.startDate)}</p>
+                  <p className="text-[#404040] font-bold">IDHADEL09559485</p>
+                </div>
+
+                {/* Greeting and Name */}
+                <div className="mb-6">
+                  <p className="text-[#404040]">Dear Sir / Madam,</p>
+                  <p className="text-[#404040] font-bold">{loanDetails.name}</p>
+                </div>
+
+                {/* Certificate Details */}
+                <div className="mb-8 text-[#404040]">
+                  <p>
+                    <span className="font-normal">Certificate of Approved Loan No. </span>
+                    <span className="font-bold">IDHADEL09559485</span>
+                  </p>
+                  <p className="mt-4">
+                    We acknowledge the receipt of minimal documentation from your end, and we sincerely appreciate your choice of Dhani Finance as your financial partner. With reference to your recent loan application, we are pleased to extend to you the following loan offer, subject to the specified terms and conditions, with the first Equated Monthly Instalment (EMI) scheduled for:
+                  </p>
+                  <p className="mt-4 font-bold">{formatDate(firstEMIDate.toISOString())}</p>
+                </div>
+
+                {/* Loan Details */}
+                <div className="space-y-4 text-[#404040]">
+                  <div className="flex">
+                    <span className="w-48">Approved Loan Amount</span>
+                    <span className="font-bold">₹ {formatIndianNumber(loanDetails.loanAmount)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-48">Interest Rate</span>
+                    <span className="font-bold">{loanDetails.annualInterestRate}%</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-48">Loan Term</span>
+                    <span className="font-bold">{loanDetails.loanPeriodYears * 12} Months</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-48">Monthly Payment (EMI)</span>
+                    <span className="font-bold">₹ {formatIndianNumber(schedule[0]?.payment)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-48">Total Interest Payable</span>
+                    <span className="font-bold">₹ {formatIndianNumber(totalInterest)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="w-48">Processing Fees</span>
+                    <span className="font-bold">₹ {formatIndianNumber(loanDetails.processingFees)}</span>
                   </div>
                 </div>
 
-                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
-                  <h2 className="text-2xl font-bold mb-4">LOAN SUMMARY</h2>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Total Cost of Loan</span>
-                      <span>₹ {formatIndianNumber(totalCost)}</span>
-                    </div>
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Total Interest</span>
-                      <span>₹ {formatIndianNumber(totalInterest)}</span>
-                    </div>
-                  </div>
+                {/* Additional Text */}
+                <div className="mt-8 text-[#404040]">
+                  <p className="mb-4">
+                    Please note that this loan offer is contingent upon your acceptance of the aforementioned terms and conditions. Should you wish to proceed with this loan, kindly respond to this communication at your earliest convenience.
+                  </p>
+                  <p className="mb-4">
+                    We look forward to serving your financial needs and fostering a long-lasting partnership with you. Should you have any questions or require further clarification, please do not hesitate to reach out to our dedicated customer service team.
+                  </p>
+                  <p>
+                    Thank you once again for choosing Dhani Finance as your trusted financial institution.
+                  </p>
                 </div>
-              </div>
 
-              <div className="mt-8 text-gray-600">
-                <p className="mb-4">Important Notes:</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>The processing fee is subject to change based on internal policies.</li>
-                  <li>All amounts are in Indian Rupees (INR).</li>
-                  <li>Interest is calculated on a reducing balance basis.</li>
-                  <li>Pre-closure charges may apply as per terms and conditions.</li>
-                </ul>
+                {/* Footer */}
+                <div className="mt-12 text-right">
+                  <p className="text-[#404040] text-sm italic underline">
+                    This is a system generated letter and hence does not require any signature.
+                  </p>
+                </div>
+
+                {/* Corporate Office */}
+                <div className="mt-8 border-t border-[#08447F] pt-4">
+                  <p className="text-[#404040] text-sm italic font-bold">Corporate Offices:</p>
+                  <p className="text-[#404040] text-xs">
+                    One International Centre (Formerly IFC), Senapati Bapat Marg, Elphinstone Road, Mumbai - 400 013
+                  </p>
+                  <p className="text-[#404040] text-xs">
+                    5th Floor, Plot no. 108, IT Park, Udyog Vihar, Phase-1, Gurugram, Haryana-122016
+                  </p>
+                </div>
               </div>
             </div>
           )}

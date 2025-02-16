@@ -43,11 +43,11 @@ function formatDate(date: string): string {
 function App() {
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [loanDetails, setLoanDetails] = useState<LoanDetails>({
-    loanAmount: 500000,
+    loanAmount: 100000,
     annualInterestRate: 4,
-    loanPeriodYears: 3,
-    startDate: '2025-02-06',
-    name: 'Murali G K',
+    loanPeriodYears: 1,
+    startDate: new Date().toISOString().split('T')[0],
+    name: 'KoS',
     processingFees: 1250
   });
 
@@ -114,7 +114,7 @@ function App() {
           const y = (3262 - scaledHeight) / 2;
           ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight);
         }
-        
+
         const link = document.createElement('a');
         link.download = `${loanDetails.name}_certificate.png`;
         link.href = scaledCanvas.toDataURL('image/png');

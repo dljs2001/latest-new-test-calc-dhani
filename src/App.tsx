@@ -383,15 +383,20 @@ function App() {
                   </p>
                 </div>
 
-                {/* Footer */}
-                <div className="mt-12 text-right">
-                  <p className="text-[#404040] text-sm italic underline">
+                {/* Images and Footer */}
+                <div className="mt-12">
+                  <div className="flex flex-col items-end gap-2 mb-4 px-8">
+                    <img src="/src/Images/approved.png" alt="Approved" className="h-12 w-auto object-contain" />
+                    <img src="/src/Images/stamp.png" alt="Stamp" className="h-12 w-auto object-contain" />
+                    <img src="/src/Images/signature.png" alt="Signature" className="h-12 w-auto object-contain" />
+                  </div>
+                  <p className="text-[#404040] text-sm italic underline text-right font-bold">
                     This is a system generated letter and hence does not require any signature.
                   </p>
                 </div>
 
-                {/* Corporate Office */}
-                <div className="mt-8 border-t border-[#08447F] pt-4">
+                {/* Corporate Office - Now Centered */}
+                <div className="mt-8 border-t border-[#08447F] pt-4 text-center">
                   <p className="text-[#404040] text-sm italic font-bold">Corporate Offices:</p>
                   <p className="text-[#404040] text-xs">
                     One International Centre (Formerly IFC), Senapati Bapat Marg, Elphinstone Road, Mumbai - 400 013

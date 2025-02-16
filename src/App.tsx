@@ -74,7 +74,7 @@ function App() {
     loanPeriodYears: 1,
     startDate: new Date().toISOString().split('T')[0],
     name: 'KoS',
-    processingFees: 1250
+    processingFees: 1380
   });
 
   const [currentPage, setCurrentPage] = useState<number>(1);

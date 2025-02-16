@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { IndianRupee, Printer, ArrowRight } from 'lucide-react';
+import { IndianRupee, Download, ArrowRight } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
 
 interface LoanDetails {
   loanAmount: number;
@@ -64,19 +65,34 @@ function App() {
     const content = contentRef.current;
     if (!content) return;
 
-    const opt = {
-      margin: 10,
-      filename: `${loanDetails.name}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
+    if (currentPage === 1) {
+      const opt = {
+        margin: 10,
+        filename: `${loanDetails.name}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          windowWidth: 1200
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      };
+
+      html2pdf().set(opt).from(content).save();
+    } else {
+      const contentDiv = content.querySelector('.bg-white.p-8');
+      if (!contentDiv) return;
+
+      html2canvas(contentDiv, {
         scale: 2,
         useCORS: true,
-        windowWidth: 1200
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-
-    html2pdf().set(opt).from(content).save();
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${loanDetails.name}_certificate.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
   };
 
   const calculateAmortizationSchedule = (details: LoanDetails): Payment[] => {
@@ -134,8 +150,8 @@ function App() {
             onClick={handleDownloadPDF}
             className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
           >
-            <Printer size={20} />
-            <span>Download PDF</span>
+            <Download size={20} />
+            <span>{currentPage === 1 ? 'Download PDF' : 'Download PNG'}</span>
           </button>
           <button
             onClick={handlePageChange}
@@ -150,7 +166,7 @@ function App() {
           {currentPage === 1 ? (
             <div>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
+                <img src="/src/Images/logo.png" alt="Logo" className="w-full h-24 object-contain" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -315,7 +331,7 @@ function App() {
               <div className="max-w-4xl mx-auto">
                 {/* Logo */}
                 <div className="mb-8">
-                  <img src="https://i.imgur.com/4Rj60nI.png" alt="Logo" className="w-full h-24 object-contain" />
+                  <img src="/src/Images/logo.png" alt="Logo" className="w-full h-24 object-contain" />
                 </div>
 
                 {/* Date and Reference Number */}
@@ -383,19 +399,19 @@ function App() {
                   </p>
                 </div>
 
-                {/* Images and Footer */}
-                <div className="mt-12">
-                  <div className="flex flex-col items-end gap-2 mb-4 px-8">
-                    <img src="/src/Images/approved.png" alt="Approved" className="h-12 w-auto object-contain" />
-                    <img src="/src/Images/stamp.png" alt="Stamp" className="h-12 w-auto object-contain" />
-                    <img src="/src/Images/signature.png" alt="Signature" className="h-12 w-auto object-contain" />
-                  </div>
-                  <p className="text-[#404040] text-sm italic underline text-right font-bold">
+                {/* Signature Image */}
+                <div className="mt-12 mb-4">
+                  <img 
+                    src="/src/Images/sign.png" 
+                    alt="Signature" 
+                    className="w-full h-auto mx-auto mb-8" 
+                  />
+                  <p className="text-[#404040] text-sm italic underline text-center font-bold">
                     This is a system generated letter and hence does not require any signature.
                   </p>
                 </div>
 
-                {/* Corporate Office - Now Centered */}
+                {/* Corporate Office */}
                 <div className="mt-8 border-t border-[#08447F] pt-4 text-center">
                   <p className="text-[#404040] text-sm italic font-bold">Corporate Offices:</p>
                   <p className="text-[#404040] text-xs">

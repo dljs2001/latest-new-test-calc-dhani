@@ -441,13 +441,16 @@ function App() {
                 {/* Signature Image */}
                 <div className="mt-12 mb-4">
                   <img 
-                    src="/src/Images/sign.png" 
+                    src={`${window.location.origin}/src/Images/sign.png`}
                     alt="Signature" 
                     className="w-full h-auto mx-auto mb-8" 
                   />
-                  <p className="text-[#404040] text-sm italic underline text-center font-bold">
-                    This is a system generated letter and hence does not require any signature.
-                  </p>
+                  <div className="text-[#404040] text-sm italic underline text-left font-bold space-y-1">
+                    <p>This is a system</p>
+                    <p>generated letter and</p>
+                    <p>hence does not require any</p>
+                    <p>signature.</p>
+                  </div>
                 </div>
 
                 {/* Corporate Office */}

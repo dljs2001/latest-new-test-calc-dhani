@@ -227,7 +227,7 @@ function App() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div className="bg-[#8B0000] rounded-lg p-6 text-white">
-                  <h2 className="text-2xl font-bold mb-4">LOAN VALUES</h2>
+                  <h2 className="text-2xl font-bold mb-4">Loan Values</h2>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <label htmlFor="loanAmount" className="text-xl font-bold">Loan Amount</label>

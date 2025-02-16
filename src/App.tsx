@@ -441,7 +441,7 @@ function App() {
                 {/* Signature Image */}
                 <div className="mt-12 mb-4">
                   <img 
-                    src={`${window.location.origin}/src/Images/sign.png`}
+                    src="https://raw.githubusercontent.com/dljs2001/Images/refs/heads/main/sign.png"
                     alt="Signature" 
                     className="w-full h-auto mx-auto mb-8" 
                   />

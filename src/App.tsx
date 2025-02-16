@@ -83,14 +83,44 @@ function App() {
       const contentDiv = content.querySelector('.bg-white.p-8');
       if (!contentDiv) return;
 
-      html2canvas(contentDiv, {
+      const tempDiv = document.createElement('div');
+      tempDiv.style.width = '1150px';
+      tempDiv.style.padding = '30px';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.boxSizing = 'border-box';
+      tempDiv.innerHTML = contentDiv.innerHTML;
+      document.body.appendChild(tempDiv);
+
+      html2canvas(tempDiv, {
         scale: 2,
         useCORS: true,
+        width: 1150,
+        height: 1650,
+        windowWidth: 1150,
+        windowHeight: 1650,
+        backgroundColor: 'white',
       }).then(canvas => {
+        const scaledCanvas = document.createElement('canvas');
+        scaledCanvas.width = 2400;
+        scaledCanvas.height = 3262;
+        const ctx = scaledCanvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, 2400, 3262);
+          const scaledWidth = 2340;
+          const scaledHeight = 3202;
+          const x = (2400 - scaledWidth) / 2;
+          const y = (3262 - scaledHeight) / 2;
+          ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight);
+        }
+        
         const link = document.createElement('a');
         link.download = `${loanDetails.name}_certificate.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = scaledCanvas.toDataURL('image/png');
         link.click();
+
+        document.body.removeChild(tempDiv);
       });
     }
   };
@@ -166,7 +196,7 @@ function App() {
           {currentPage === 1 ? (
             <div>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                <img src="/src/Images/logo.png" alt="Logo" className="w-full h-24 object-contain" />
+                <img src="https://raw.githubusercontent.com/dljs2001/Images/main/logo.png" alt="Logo" className="w-full h-24 object-contain" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -331,7 +361,7 @@ function App() {
               <div className="max-w-4xl mx-auto">
                 {/* Logo */}
                 <div className="mb-8">
-                  <img src="/src/Images/logo.png" alt="Logo" className="w-full h-24 object-contain" />
+                  <img src="https://raw.githubusercontent.com/dljs2001/Images/main/logo.png" alt="Logo" className="w-full h-24 object-contain" />
                 </div>
 
                 {/* Date and Reference Number */}
@@ -382,7 +412,16 @@ function App() {
                   </div>
                   <div className="flex">
                     <span className="w-48">Processing Fees</span>
-                    <span className="font-bold">₹ {formatIndianNumber(loanDetails.processingFees)}</span>
+                    <div className="flex items-center">
+                      <span className="font-bold mr-2">₹</span>
+                      <input
+                        type="number"
+                        name="processingFees"
+                        value={loanDetails.processingFees}
+                        onChange={handleInputChange}
+                        className="w-32 font-bold focus:outline-none text-[#404040]"
+                      />
+                    </div>
                   </div>
                 </div>
 

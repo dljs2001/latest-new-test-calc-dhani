@@ -24,11 +24,37 @@ interface Payment {
 
 function formatIndianNumber(num: number): string {
   if (isNaN(num)) return '0';
-  const value = Math.round(num);
-  return new Intl.NumberFormat('en-IN', {
-    maximumFractionDigits: 0,
-    useGrouping: true
-  }).format(value);
+  const value = Math.round(num).toString();
+  let lastThree = value.substring(value.length - 3);
+  let otherNumbers = value.substring(0, value.length - 3);
+  if (otherNumbers !== '') {
+    lastThree = ',' + lastThree;
+  }
+  return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+}
+
+function numberToWords(num: number): string {
+  const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+  const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const formatTens = (num: number): string => {
+    if (num < 10) return single[num];
+    if (num < 20) return double[num - 10];
+    return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + single[num % 10] : '');
+  };
+  
+  if (num === 0) return 'Zero';
+  const crore = Math.floor(num / 10000000);
+  const lakh = Math.floor((num % 10000000) / 100000);
+  const thousand = Math.floor((num % 100000) / 1000);
+  const remaining = num % 1000;
+  
+  let str = '';
+  if (crore > 0) str += formatTens(crore) + ' Crore ';
+  if (lakh > 0) str += formatTens(lakh) + ' Lakh ';
+  if (thousand > 0) str += formatTens(thousand) + ' Thousand ';
+  if (remaining > 0) str += formatTens(remaining);
+  return str.trim() + ' Rupees';
 }
 
 function formatDate(date: string): string {
@@ -205,16 +231,24 @@ function App() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <label htmlFor="loanAmount" className="text-xl font-bold">Loan Amount</label>
-                      <div className="flex items-center">
-                        <span className="mr-2 text-xl">₹</span>
-                        <input
-                          type="number"
-                          id="loanAmount"
-                          name="loanAmount"
-                          value={loanDetails.loanAmount}
-                          onChange={handleInputChange}
-                          className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                        />
+                      <div className="flex flex-col">
+                        <div className="text-xl font-extrabold mb-1 text-white text-left">
+                          ( {numberToWords(loanDetails.loanAmount)} )
+                        </div>
+                        <div className="flex items-center justify-end">
+                          <span className="text-xl">₹</span>
+                          <input
+                            type="text"
+                            id="loanAmount"
+                            name="loanAmount"
+                            value={formatIndianNumber(loanDetails.loanAmount)}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
+                              handleInputChange({ target: { name: 'loanAmount', value } });
+                            }}
+                            className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right ml-1"
+                          />
+                        </div>
                       </div>
                     </div>
                     <div className="flex justify-between items-center">

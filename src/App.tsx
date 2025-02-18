@@ -236,7 +236,6 @@ function App() {
                           ( {numberToWords(loanDetails.loanAmount)} )
                         </div>
                         <div className="flex items-center justify-end">
-                          <span className="text-xl">₹</span>
                           <input
                             type="text"
                             id="loanAmount"
@@ -246,8 +245,9 @@ function App() {
                               const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
                               handleInputChange({ target: { name: 'loanAmount', value } });
                             }}
-                            className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right ml-1"
+                            className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
                           />
+                          <span className="text-xl ml-1">₹</span>
                         </div>
                       </div>
                     </div>
@@ -306,7 +306,9 @@ function App() {
                   <div className="space-y-4">
                     <div className="flex justify-between text-xl font-bold">
                       <span>Monthly Payment</span>
-                      <span>₹ {formatIndianNumber(schedule[0]?.payment)}</span>
+                      <div className="flex items-center">
+                        <span>{formatIndianNumber(schedule[0]?.payment)} ₹</span>
+                      </div>
                     </div>
                     <div className="flex justify-between text-xl font-bold">
                       <span>Number Of Payments</span>
@@ -314,11 +316,15 @@ function App() {
                     </div>
                     <div className="flex justify-between text-xl font-bold">
                       <span>Total Interest</span>
-                      <span>₹ {formatIndianNumber(totalInterest)}</span>
+                      <div className="flex items-center">
+                        <span>{formatIndianNumber(totalInterest)} ₹</span>
+                      </div>
                     </div>
                     <div className="flex justify-between text-xl font-bold">
                       <span>Total Cost Of Loan</span>
-                      <span>₹ {formatIndianNumber(totalCost)}</span>
+                      <div className="flex items-center">
+                        <span>{formatIndianNumber(totalCost)} ₹</span>
+                      </div>
                     </div>
                     <div className="flex justify-between text-xl font-bold">
                       <span>Date</span>
@@ -369,19 +375,19 @@ function App() {
                             {payment.paymentDate}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.amount)}
+                            {formatIndianNumber(payment.amount)} ₹
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.payment)}
+                            {formatIndianNumber(payment.payment)} ₹
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.principal)}
+                            {formatIndianNumber(payment.principal)} ₹
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.interest)}
+                            {formatIndianNumber(payment.interest)} ₹
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.endingBalance)}
+                            {formatIndianNumber(payment.endingBalance)} ₹
                           </td>
                         </tr>
                       ))}
@@ -391,26 +397,22 @@ function App() {
               </div>
             </div>
           ) : (
-            <div className="bg-white p-8 rounded-lg shadow-lg">
+            <div className="bg-white p-8 rounded-lg shadow-lg print-border">
               <div className="max-w-4xl mx-auto">
-                {/* Logo */}
                 <div className="mb-8">
                   <img src="https://raw.githubusercontent.com/dljs2001/Images/main/logo.png" alt="Logo" className="w-full h-24 object-contain" />
                 </div>
 
-                {/* Date and Reference Number */}
                 <div className="text-right mb-6">
                   <p className="text-[#404040] font-bold">{formatDate(loanDetails.startDate)}</p>
                   <p className="text-[#404040] font-bold">IDHADEL09559485</p>
                 </div>
 
-                {/* Greeting and Name */}
                 <div className="mb-6">
                   <p className="text-[#404040]">Dear Sir / Madam,</p>
                   <p className="text-[#404040] font-bold">{loanDetails.name}</p>
                 </div>
 
-                {/* Certificate Details */}
                 <div className="mb-8 text-[#404040]">
                   <p>
                     <span className="font-normal">Certificate of Approved Loan No. </span>
@@ -422,11 +424,10 @@ function App() {
                   <p className="mt-4 font-bold">{formatDate(firstEMIDate.toISOString())}</p>
                 </div>
 
-                {/* Loan Details */}
                 <div className="space-y-4 text-[#404040]">
                   <div className="flex">
                     <span className="w-48">Approved Loan Amount</span>
-                    <span className="font-bold">₹ {formatIndianNumber(loanDetails.loanAmount)}</span>
+                    <span className="font-bold">{formatIndianNumber(loanDetails.loanAmount)} ₹</span>
                   </div>
                   <div className="flex">
                     <span className="w-48">Interest Rate</span>
@@ -438,16 +439,15 @@ function App() {
                   </div>
                   <div className="flex">
                     <span className="w-48">Monthly Payment (EMI)</span>
-                    <span className="font-bold">₹ {formatIndianNumber(schedule[0]?.payment)}</span>
+                    <span className="font-bold">{formatIndianNumber(schedule[0]?.payment)} ₹</span>
                   </div>
                   <div className="flex">
                     <span className="w-48">Total Interest Payable</span>
-                    <span className="font-bold">₹ {formatIndianNumber(totalInterest)}</span>
+                    <span className="font-bold">{formatIndianNumber(totalInterest)} ₹</span>
                   </div>
                   <div className="flex">
                     <span className="w-48">Processing Fees</span>
                     <div className="flex items-center">
-                      <span className="font-bold mr-2">₹</span>
                       <input
                         type="number"
                         name="processingFees"
@@ -455,11 +455,11 @@ function App() {
                         onChange={handleInputChange}
                         className="w-32 font-bold focus:outline-none text-[#404040]"
                       />
+                      <span className="ml-1">₹</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Additional Text */}
                 <div className="mt-8 text-[#404040]">
                   <p className="mb-4">
                     Please note that this loan offer is contingent upon your acceptance of the aforementioned terms and conditions. Should you wish to proceed with this loan, kindly respond to this communication at your earliest convenience.
@@ -472,7 +472,6 @@ function App() {
                   </p>
                 </div>
 
-                {/* Signature Image */}
                 <div className="mt-12 mb-4">
                   <img 
                     src="https://raw.githubusercontent.com/dljs2001/Images/refs/heads/main/sign.png"
@@ -487,7 +486,6 @@ function App() {
                   </div>
                 </div>
 
-                {/* Corporate Office */}
                 <div className="mt-8 border-t border-[#08447F] pt-4 text-center">
                   <p className="text-[#404040] text-sm italic font-bold">Corporate Offices:</p>
                   <p className="text-[#404040] text-xs">

@@ -236,6 +236,7 @@ function App() {
                           ( {numberToWords(loanDetails.loanAmount)} )
                         </div>
                         <div className="flex items-center justify-end">
+                          <span className="text-xl mr-1">₹</span>
                           <input
                             type="text"
                             id="loanAmount"
@@ -247,7 +248,6 @@ function App() {
                             }}
                             className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
                           />
-                          <span className="text-xl ml-1">₹</span>
                         </div>
                       </div>
                     </div>
@@ -284,7 +284,11 @@ function App() {
                         name="startDate"
                         value={loanDetails.startDate}
                         onChange={handleInputChange}
-                        className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none"
+                        className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                        style={{ 
+                          color: "white",
+                          colorScheme: "dark"
+                        }}
                       />
                     </div>
                     <div className="flex justify-between items-center">
@@ -307,7 +311,7 @@ function App() {
                     <div className="flex justify-between text-xl font-bold">
                       <span>Monthly Payment</span>
                       <div className="flex items-center">
-                        <span>{formatIndianNumber(schedule[0]?.payment)} ₹</span>
+                        <span>₹ {formatIndianNumber(schedule[0]?.payment)}</span>
                       </div>
                     </div>
                     <div className="flex justify-between text-xl font-bold">
@@ -317,13 +321,13 @@ function App() {
                     <div className="flex justify-between text-xl font-bold">
                       <span>Total Interest</span>
                       <div className="flex items-center">
-                        <span>{formatIndianNumber(totalInterest)} ₹</span>
+                        <span>₹ {formatIndianNumber(totalInterest)}</span>
                       </div>
                     </div>
                     <div className="flex justify-between text-xl font-bold">
                       <span>Total Cost Of Loan</span>
                       <div className="flex items-center">
-                        <span>{formatIndianNumber(totalCost)} ₹</span>
+                        <span>₹ {formatIndianNumber(totalCost)}</span>
                       </div>
                     </div>
                     <div className="flex justify-between text-xl font-bold">
@@ -349,9 +353,6 @@ function App() {
                           Payment Date
                         </th>
                         <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Amount
-                        </th>
-                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
                           Payment
                         </th>
                         <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
@@ -367,27 +368,24 @@ function App() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {schedule.map((payment, index) => (
-                        <tr key={payment.paymentNo} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                        <tr key={payment.paymentNo} className={index % 2 === 0 ? 'bg-red-200' : 'bg-blue-200'}>
+                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-center">
                             {String(payment.paymentNo).padStart(2, '0')}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
                             {payment.paymentDate}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            {formatIndianNumber(payment.amount)} ₹
+                            ₹ {formatIndianNumber(payment.payment)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            {formatIndianNumber(payment.payment)} ₹
+                            ₹ {formatIndianNumber(payment.principal)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            {formatIndianNumber(payment.principal)} ₹
+                            ₹ {formatIndianNumber(payment.interest)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            {formatIndianNumber(payment.interest)} ₹
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            {formatIndianNumber(payment.endingBalance)} ₹
+                            ₹ {formatIndianNumber(payment.endingBalance)}
                           </td>
                         </tr>
                       ))}
@@ -427,7 +425,7 @@ function App() {
                 <div className="space-y-4 text-[#404040]">
                   <div className="flex">
                     <span className="w-48">Approved Loan Amount</span>
-                    <span className="font-bold">{formatIndianNumber(loanDetails.loanAmount)} ₹</span>
+                    <span className="font-bold">₹ {formatIndianNumber(loanDetails.loanAmount)}</span>
                   </div>
                   <div className="flex">
                     <span className="w-48">Interest Rate</span>
@@ -439,15 +437,16 @@ function App() {
                   </div>
                   <div className="flex">
                     <span className="w-48">Monthly Payment (EMI)</span>
-                    <span className="font-bold">{formatIndianNumber(schedule[0]?.payment)} ₹</span>
+                    <span className="font-bold">₹ {formatIndianNumber(schedule[0]?.payment)}</span>
                   </div>
                   <div className="flex">
                     <span className="w-48">Total Interest Payable</span>
-                    <span className="font-bold">{formatIndianNumber(totalInterest)} ₹</span>
+                    <span className="font-bold">₹ {formatIndianNumber(totalInterest)}</span>
                   </div>
                   <div className="flex">
                     <span className="w-48">Processing Fees</span>
                     <div className="flex items-center">
+                      <span className="mr-1">₹</span>
                       <input
                         type="number"
                         name="processingFees"
@@ -455,7 +454,6 @@ function App() {
                         onChange={handleInputChange}
                         className="w-32 font-bold focus:outline-none text-[#404040]"
                       />
-                      <span className="ml-1">₹</span>
                     </div>
                   </div>
                 </div>

@@ -220,7 +220,7 @@ function App() {
       ctx.font = 'bold 36px "Roboto"';  // Scale: 36px
       ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
       const dateText = `Date: ${new Date(loanDetails.startDate).toLocaleDateString('en-IN')}`;
-      ctx.fillText(dateText, 840, 380);
+      ctx.fillText(dateText, 840, 280);
       
       
       // Draw certificate paragraph text

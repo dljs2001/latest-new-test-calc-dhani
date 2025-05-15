@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
-import { IndianRupee, Download, ArrowRight } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Download } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
-import html2canvas from 'html2canvas';
+
+interface Payment {
+  paymentNo: number;
+  paymentDate: string;
+  payment: number;
+  principal: number;
+  interest: number;
+  endingBalance: number;
+}
 
 interface LoanDetails {
   loanAmount: number;
@@ -9,75 +17,19 @@ interface LoanDetails {
   loanPeriodYears: number;
   startDate: string;
   name: string;
-  processingFees: number;
-}
-
-interface Payment {
-  paymentNo: number;
-  paymentDate: string;
-  amount: number;
-  payment: number;
-  principal: number;
-  interest: number;
-  endingBalance: number;
-}
-
-function formatIndianNumber(num: number): string {
-  if (isNaN(num)) return '0';
-  const value = Math.round(num).toString();
-  let lastThree = value.substring(value.length - 3);
-  let otherNumbers = value.substring(0, value.length - 3);
-  if (otherNumbers !== '') {
-    lastThree = ',' + lastThree;
-  }
-  return otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
-}
-
-function numberToWords(num: number): string {
-  const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-  const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-  const formatTens = (num: number): string => {
-    if (num < 10) return single[num];
-    if (num < 20) return double[num - 10];
-    return tens[Math.floor(num / 10)] + (num % 10 ? ' ' + single[num % 10] : '');
-  };
-  
-  if (num === 0) return 'Zero';
-  const crore = Math.floor(num / 10000000);
-  const lakh = Math.floor((num % 10000000) / 100000);
-  const thousand = Math.floor((num % 100000) / 1000);
-  const remaining = num % 1000;
-  
-  let str = '';
-  if (crore > 0) str += formatTens(crore) + ' Crore ';
-  if (lakh > 0) str += formatTens(lakh) + ' Lakh ';
-  if (thousand > 0) str += formatTens(thousand) + ' Thousand ';
-  if (remaining > 0) str += formatTens(remaining);
-  return str.trim() + ' Rupees';
-}
-
-function formatDate(date: string): string {
-  const d = new Date(date);
-  return d.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: '2-digit'
-  });
+  processingFee: number; // Add this new field
 }
 
 function App() {
-  const contentRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [loanDetails, setLoanDetails] = useState<LoanDetails>({
     loanAmount: 100000,
     annualInterestRate: 4,
     loanPeriodYears: 1,
     startDate: new Date().toISOString().split('T')[0],
     name: 'KoS',
-    processingFees: 1380
+    processingFee: 1380 // Default processing fee
   });
-
-  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -87,68 +39,89 @@ function App() {
     }));
   };
 
+  const formatIndianNumber = (num: number): string => {
+    if (isNaN(num)) return '0';
+    
+    const str = Math.abs(num).toString();
+    let lastThree = str.substring(str.length - 3);
+    let otherNumbers = str.substring(0, str.length - 3);
+    
+    if (otherNumbers !== '') {
+      lastThree = ',' + lastThree;
+    }
+    
+    // Place the comma after every 2 digits in the remaining part
+    let formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+    
+    return num < 0 ? '-' + formatted : formatted;
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const numberToWords = (num: number): string => {
+    const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    
+    const convertLessThanOneThousand = (n: number): string => {
+      if (n === 0) return '';
+      if (n < 20) return units[n];
+      if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + units[n % 10] : '');
+      return units[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertLessThanOneThousand(n % 100) : '');
+    };
+    
+    if (num === 0) return 'Zero';
+    
+    let result = '';
+    let crore = Math.floor(num / 10000000);
+    let lakh = Math.floor((num % 10000000) / 100000);
+    let thousand = Math.floor((num % 100000) / 1000);
+    let remaining = num % 1000;
+    
+    if (crore > 0) {
+      result += convertLessThanOneThousand(crore) + ' Crore ';
+    }
+    
+    if (lakh > 0) {
+      result += convertLessThanOneThousand(lakh) + ' Lakh ';
+    }
+    
+    if (thousand > 0) {
+      result += convertLessThanOneThousand(thousand) + ' Thousand ';
+    }
+    
+    if (remaining > 0) {
+      result += convertLessThanOneThousand(remaining);
+    }
+    
+    return result.trim();
+  };
+
   const handleDownloadPDF = () => {
     const content = contentRef.current;
     if (!content) return;
 
-    if (currentPage === 1) {
-      const opt = {
-        margin: 10,
-        filename: `${loanDetails.name}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          windowWidth: 1200
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-      };
-
-      html2pdf().set(opt).from(content).save();
-    } else {
-      const contentDiv = content.querySelector('.bg-white.p-8');
-      if (!contentDiv) return;
-
-      const tempDiv = document.createElement('div');
-      tempDiv.style.width = '1150px';
-      tempDiv.style.padding = '30px';
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.boxSizing = 'border-box';
-      tempDiv.innerHTML = contentDiv.innerHTML;
-      document.body.appendChild(tempDiv);
-
-      html2canvas(tempDiv, {
+    const opt = {
+      margin: 10,
+      filename: `${loanDetails.name}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
         scale: 2,
         useCORS: true,
-        width: 1150,
-        height: 1650,
-        windowWidth: 1150,
-        windowHeight: 1650,
-        backgroundColor: 'white',
-      }).then(canvas => {
-        const scaledCanvas = document.createElement('canvas');
-        scaledCanvas.width = 2400;
-        scaledCanvas.height = 3262;
-        const ctx = scaledCanvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = 'white';
-          ctx.fillRect(0, 0, 2400, 3262);
-          const scaledWidth = 2340;
-          const scaledHeight = 3202;
-          const x = (2400 - scaledWidth) / 2;
-          const y = (3262 - scaledHeight) / 2;
-          ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight);
-        }
+        allowTaint: true,
+        logging: true,
+        windowWidth: 1200
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
 
-        const link = document.createElement('a');
-        link.download = `${loanDetails.name}_certificate.png`;
-        link.href = scaledCanvas.toDataURL('image/png');
-        link.click();
-
-        document.body.removeChild(tempDiv);
-      });
-    }
+    html2pdf().set(opt).from(content).save();
   };
 
   const calculateAmortizationSchedule = (details: LoanDetails): Payment[] => {
@@ -168,15 +141,11 @@ function App() {
 
       const paymentDate = new Date(startDate);
       paymentDate.setMonth(startDate.getMonth() + i);
-
+      
       schedule.push({
         paymentNo: i,
-        paymentDate: paymentDate.toLocaleDateString('en-IN', { 
-          day: '2-digit',
-          month: 'short',
-          year: '2-digit'
-        }),
-        amount: Math.round(balance),
+        paymentDate: formatDate(paymentDate.toISOString()),
+        amount: details.loanAmount,
         payment: Math.round(monthlyPayment),
         principal: Math.round(principal),
         interest: Math.round(interest),
@@ -191,312 +160,462 @@ function App() {
   const totalInterest = schedule.reduce((sum, payment) => sum + payment.interest, 0);
   const totalCost = Number(loanDetails.loanAmount) + totalInterest;
 
-  const handlePageChange = () => {
-    setCurrentPage(currentPage === 1 ? 2 : 1);
-  };
-
   const firstEMIDate = new Date(loanDetails.startDate);
   firstEMIDate.setMonth(firstEMIDate.getMonth() + 1);
 
+  const [showCertificate, setShowCertificate] = useState(false);
+  const certificateCanvasRef = useRef<HTMLCanvasElement>(null);
+  
+  const handleViewCertificate = () => {
+    setShowCertificate(true);
+  };
+
+  const handleBackToLoanDetails = () => {
+    setShowCertificate(false);
+  };
+
+  const handleDownloadCertificate = () => {
+    const canvas = certificateCanvasRef.current;
+    if (!canvas) return;
+    
+    // Create a temporary link element
+    const link = document.createElement('a');
+    link.download = `${loanDetails.name}_certificate.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Draw certificate content on canvas
+  const drawCertificate = () => {
+    const canvas = certificateCanvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Set canvas dimensions
+    canvas.width = 1192;
+    canvas.height = 1684;
+    
+    // Calculate first EMI date (one month from start date)
+    const emiDate = new Date(loanDetails.startDate);
+    emiDate.setMonth(emiDate.getMonth() + 1);
+    const formattedEmiDate = emiDate.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: '2-digit'
+    });
+    
+    // Load and draw background image
+    const img = new Image();
+    img.onload = async () => {
+      // Ensure Roboto font is loaded before drawing
+      await document.fonts.ready;
+      
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Draw Date
+      ctx.font = 'bold 36px "Roboto"';  // Scale: 36px
+      ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
+      const dateText = `Date: ${new Date(loanDetails.startDate).toLocaleDateString('en-IN')}`;
+      ctx.fillText(dateText, 840, 380);
+      
+      
+      // Draw certificate paragraph text
+      ctx.font = 'bold 32px "Roboto"';  // Scale: 32px
+      ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
+      ctx.textAlign = 'center';
+      
+      // Draw "Dear Name" line
+      ctx.fillText(`Dear, ${loanDetails.name}`, canvas.width / 2, 500);
+      
+      // Draw Certificate title
+      ctx.font = 'bold 36px "Roboto"';  // Scale: 36px
+      ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
+      ctx.fillText('Certificate of Approved Loan No. IDHADEL09559485', canvas.width / 2, 580);
+      
+      // Draw paragraph text
+      ctx.font = '28px "Roboto"';  // Scale: 28px
+      ctx.fillStyle = '#000000';   // Hex: #000000 (Black)
+      
+      // Break the paragraph into multiple lines
+      const lineHeight = 40;
+      let y = 660;
+      
+      ctx.fillText('We acknowledge the receipt of minimal documentation from your end, and we', canvas.width / 2, y);
+      y += lineHeight;
+      ctx.fillText('sincerely appreciate your choice of Dhani Finance as your financial partner.', canvas.width / 2, y);
+      y += lineHeight;
+      ctx.fillText('With reference to your recent loan application, we are pleased to extend to you', canvas.width / 2, y);
+      y += lineHeight;
+      ctx.fillText('the following loan offer, subject to the specified terms and conditions, with the', canvas.width / 2, y);
+      y += lineHeight;
+      ctx.fillText('first Equated Monthly installment (EMI) scheduled for :', canvas.width / 2, y);
+      
+      // Draw EMI date with emphasis
+      y += lineHeight + 10;
+      ctx.font = 'bold 32px "Roboto"';  // Scale: 32px
+      ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
+      ctx.fillText(formattedEmiDate, canvas.width / 2, y);
+      
+      // Add 6 rounded cards below the EMI date
+      y += lineHeight + 40;
+      
+      // Calculate monthly payment
+      const monthlyRate = loanDetails.annualInterestRate / 12 / 100;
+      const numberOfPayments = loanDetails.loanPeriodYears * 12;
+      const monthlyPayment = (loanDetails.loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
+                            (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+      
+      // Calculate total interest
+      const totalInterest = schedule.reduce((sum, payment) => sum + payment.interest, 0);
+      
+      // Calculate processing fee (1.38% of loan amount)
+      // const processingFee = Math.round(loanDetails.loanAmount * 0.0138);
+      
+      // With this:
+      // Use the user-defined processing fee
+      const processingFee = loanDetails.processingFee;
+      
+      // Card dimensions and layout
+      const cardWidth = 300;
+      const cardHeight = 120;
+      const cardSpacing = 30;
+      const cardsPerRow = 3;
+      const cornerRadius = 15;
+      
+      // Card data
+      const cards = [
+        {
+          title: "Approved Loan Amount",
+          value: `₹ ${formatIndianNumber(loanDetails.loanAmount)}`
+        },
+        {
+          title: "Interest Rate",
+          value: `${loanDetails.annualInterestRate}%`
+        },
+        {
+          title: "Loan Term",
+          value: `${loanDetails.loanPeriodYears * 12} Months`
+        },
+        {
+          title: "Monthly Payment (EMI)",
+          value: `₹ ${formatIndianNumber(Math.round(monthlyPayment))}`
+        },
+        {
+          title: "Total Interest Payable",
+          value: `₹ ${formatIndianNumber(totalInterest)}`
+        },
+        {
+          title: "One Time Processing Fees",
+          value: `₹ ${formatIndianNumber(processingFee)}`
+        }
+      ];
+      
+      // Draw cards
+      for (let i = 0; i < cards.length; i++) {
+        const row = Math.floor(i / cardsPerRow);
+        const col = i % cardsPerRow;
+        
+        const cardX = (canvas.width - (cardWidth * cardsPerRow + cardSpacing * (cardsPerRow - 1))) / 2 + col * (cardWidth + cardSpacing);
+        const cardY = y + row * (cardHeight + cardSpacing);
+        
+        // Draw rounded rectangle for card
+        ctx.beginPath();
+        ctx.moveTo(cardX + cornerRadius, cardY);
+        ctx.lineTo(cardX + cardWidth - cornerRadius, cardY);
+        ctx.quadraticCurveTo(cardX + cardWidth, cardY, cardX + cardWidth, cardY + cornerRadius);
+        ctx.lineTo(cardX + cardWidth, cardY + cardHeight - cornerRadius);
+        ctx.quadraticCurveTo(cardX + cardWidth, cardY + cardHeight, cardX + cardWidth - cornerRadius, cardY + cardHeight);
+        ctx.lineTo(cardX + cornerRadius, cardY + cardHeight);
+        ctx.quadraticCurveTo(cardX, cardY + cardHeight, cardX, cardY + cardHeight - cornerRadius);
+        ctx.lineTo(cardX, cardY + cornerRadius);
+        ctx.quadraticCurveTo(cardX, cardY, cardX + cornerRadius, cardY);
+        ctx.closePath();
+        
+        // Fill card with dark red color
+        ctx.fillStyle = '#8B0000';
+        ctx.fill();
+        
+        // Draw card title
+        ctx.font = 'bold 20px "Roboto"';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText(cards[i].title, cardX + cardWidth / 2, cardY + 35);
+        
+        // Draw card value
+        ctx.font = 'bold 24px "Roboto"';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(cards[i].value, cardX + cardWidth / 2, cardY + 80);
+      }
+      
+      // Add the director and thank you text at the bottom
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#8B0000';
+      let footerY = y + (Math.ceil(cards.length / cardsPerRow)) * (cardHeight + cardSpacing) + 200; // Increased from 80 to 200 to move down
+      
+      ctx.font = 'bold 20px "Roboto"';
+      ctx.fillText("Our director Mr. Sanjeev Kashyap", canvas.width - 100, footerY);
+      
+      footerY += 30; // Reduced from 50 to 30 for tighter spacing
+      ctx.fillText("Thank You for choosing us", canvas.width - 100, footerY);
+      
+      footerY += 30; // Reduced from 50 to 30 for tighter spacing
+      ctx.fillText(`${loanDetails.name}`, canvas.width - 100, footerY);
+    };
+    img.src = '/certificate_bg.png';
+  };
+
+  // Use effect to draw certificate when canvas is shown
+  React.useEffect(() => {
+    if (showCertificate) {
+      drawCertificate();
+    }
+  }, [showCertificate, loanDetails]);
+  
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-end gap-4 mb-4">
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
-          >
-            <Download size={20} />
-            <span>{currentPage === 1 ? 'Download PDF' : 'Download PNG'}</span>
-          </button>
-          <button
-            onClick={handlePageChange}
-            className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
-          >
-            <span>{currentPage === 1 ? 'Next' : 'Previous'}</span>
-            {currentPage === 1 && <ArrowRight size={20} />}
-          </button>
-        </div>
+        {!showCertificate ? (
+          <>
+            <div className="flex justify-end gap-4 mb-4">
+              <button
+                onClick={handleDownloadPDF}
+                className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
+              >
+                <Download size={20} />
+                <span>Download PDF</span>
+              </button>
+              <button
+                onClick={handleViewCertificate}
+                className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
+              >
+                <span>View Certificate</span>
+              </button>
+            </div>
 
-        <div ref={contentRef}>
-          {currentPage === 1 ? (
-            <div>
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-                <img src="https://raw.githubusercontent.com/dljs2001/Images/main/logo.png" alt="Logo" className="w-full h-24 object-contain" />
-              </div>
+            <div ref={contentRef}>
+              <div>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+                  <img src="/dmi_dhani_logo.png" alt="DMI Finance Logo" className="w-full h-24 object-contain" />
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
-                  <h2 className="text-2xl font-bold mb-4">Loan Values</h2>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <label htmlFor="loanAmount" className="text-xl font-bold">Loan Amount</label>
-                      <div className="flex flex-col">
-                        <div className="text-xl font-extrabold mb-1 text-white text-left">
-                          ( {numberToWords(loanDetails.loanAmount)} )
-                        </div>
-                        <div className="flex items-center justify-end">
-                          <span className="text-xl mr-1">₹</span>
-                          <input
-                            type="text"
-                            id="loanAmount"
-                            name="loanAmount"
-                            value={formatIndianNumber(loanDetails.loanAmount)}
-                            onChange={(e) => {
-                              const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
-                              handleInputChange({ target: { name: 'loanAmount', value } });
-                            }}
-                            className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                          />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  <div className="bg-[#8B0000] rounded-lg p-6 text-white">
+                    <h2 className="text-2xl font-bold mb-4">Loan Values</h2>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <label htmlFor="loanAmount" className="text-xl font-bold">Loan Amount</label>
+                        <div className="flex flex-col">
+                          <div className="text-sm font-medium mb-1 text-white text-right">
+                            ( {numberToWords(loanDetails.loanAmount)} )
+                          </div>
+                          <div className="flex items-center justify-end">
+                            <span className="text-xl mr-1">₹</span>
+                            <input
+                              type="text"
+                              id="loanAmount"
+                              name="loanAmount"
+                              value={formatIndianNumber(loanDetails.loanAmount)}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
+                                handleInputChange({ target: { name: 'loanAmount', value } });
+                              }}
+                              className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <label htmlFor="annualInterestRate" className="text-xl font-bold">Annual interest rate</label>
-                      <div className="flex items-center">
+                      <div className="flex justify-between items-center">
+                        <label htmlFor="annualInterestRate" className="text-xl font-bold">Annual interest rate</label>
+                        <div className="flex items-center">
+                          <input
+                            type="number"
+                            id="annualInterestRate"
+                            name="annualInterestRate"
+                            value={loanDetails.annualInterestRate}
+                            onChange={handleInputChange}
+                            className="w-16 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                          />
+                          <span className="ml-2 text-xl">%</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <label htmlFor="loanPeriodYears" className="text-xl font-bold">Loan Period In Years</label>
                         <input
                           type="number"
-                          id="annualInterestRate"
-                          name="annualInterestRate"
-                          value={loanDetails.annualInterestRate}
+                          id="loanPeriodYears"
+                          name="loanPeriodYears"
+                          value={loanDetails.loanPeriodYears}
                           onChange={handleInputChange}
-                          className="w-16 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                          className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
                         />
-                        <span className="ml-2 text-xl">%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <label htmlFor="startDate" className="text-xl font-bold">Start Date Of Loan</label>
+                        <input
+                          type="date"
+                          id="startDate"
+                          name="startDate"
+                          value={loanDetails.startDate}
+                          onChange={handleInputChange}
+                          className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                          style={{ 
+                            color: "white",
+                            colorScheme: "dark"
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <label htmlFor="name" className="text-xl font-bold">Name</label>
+                        <input
+                          type="text"
+                          id="name"
+                          name="name"
+                          value={loanDetails.name}
+                          onChange={handleInputChange}
+                          className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
+                        />
                       </div>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <label htmlFor="loanPeriodYears" className="text-xl font-bold">Loan Period In Years</label>
-                      <input
-                        type="number"
-                        id="loanPeriodYears"
-                        name="loanPeriodYears"
-                        value={loanDetails.loanPeriodYears}
-                        onChange={handleInputChange}
-                        className="w-32 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                      />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <label htmlFor="startDate" className="text-xl font-bold">Start Date Of Loan</label>
-                      <input
-                        type="date"
-                        id="startDate"
-                        name="startDate"
-                        value={loanDetails.startDate}
-                        onChange={handleInputChange}
-                        className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                        style={{ 
-                          color: "white",
-                          colorScheme: "dark"
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <label htmlFor="name" className="text-xl font-bold">Name</label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={loanDetails.name}
-                        onChange={handleInputChange}
-                        className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                      />
+                  </div>
+
+                  <div className="bg-[#8B0000] rounded-lg p-6 text-white">
+                    <h2 className="text-2xl font-bold mb-4">Loan Summary</h2>
+                    <div className="space-y-4">
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>Monthly Payment</span>
+                        <div className="flex items-center">
+                          <span>₹ {formatIndianNumber(schedule[0]?.payment)}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>Number Of Payments</span>
+                        <span>{schedule.length}</span>
+                      </div>
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>Total Interest</span>
+                        <div className="flex items-center">
+                          <span>₹ {formatIndianNumber(totalInterest)}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>Total Cost Of Loan</span>
+                        <div className="flex items-center">
+                          <span>₹ {formatIndianNumber(totalCost)}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-xl font-bold">
+                        <span>Date</span>
+                        <span>{new Date(loanDetails.startDate).toLocaleDateString('en-IN')}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-[#8B0000] rounded-lg p-6 text-white">
-                  <h2 className="text-2xl font-bold mb-4">Loan Summary</h2>
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Monthly Payment</span>
-                      <div className="flex items-center">
-                        <span>₹ {formatIndianNumber(schedule[0]?.payment)}</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Number Of Payments</span>
-                      <span>{schedule.length}</span>
-                    </div>
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Total Interest</span>
-                      <div className="flex items-center">
-                        <span>₹ {formatIndianNumber(totalInterest)}</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Total Cost Of Loan</span>
-                      <div className="flex items-center">
-                        <span>₹ {formatIndianNumber(totalCost)}</span>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-xl font-bold">
-                      <span>Date</span>
-                      <span>{new Date(loanDetails.startDate).toLocaleDateString('en-IN')}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-                <h2 className="text-2xl font-bold text-center py-4 bg-[#8B0000] text-white">
-                  Loan Details Monthly Break-Up
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-[#8B0000]">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Pymnt No.
-                        </th>
-                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Payment Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Payment
-                        </th>
-                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Principal
-                        </th>
-                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Interest
-                        </th>
-                        <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
-                          Ending Balance
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {schedule.map((payment, index) => (
-                        <tr key={payment.paymentNo} className={index % 2 === 0 ? 'bg-red-200' : 'bg-blue-200'}>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-center">
-                            {String(payment.paymentNo).padStart(2, '0')}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            {payment.paymentDate}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.payment)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.principal)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.interest)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
-                            ₹ {formatIndianNumber(payment.endingBalance)}
-                          </td>
+                <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+                  <h2 className="text-2xl font-bold text-center py-4 bg-[#8B0000] text-white">
+                    Loan Details Monthly Break-Up
+                  </h2>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-[#8B0000]">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                            Pymnt No.
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                            Payment Date
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                            Payment
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                            Principal
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                            Interest
+                          </th>
+                          <th className="px-6 py-3 text-left text-sm font-bold text-white uppercase tracking-wider">
+                            Ending Balance
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {schedule.map((payment, index) => (
+                          <tr key={payment.paymentNo} className={index % 2 === 0 ? 'bg-red-200' : 'bg-blue-200'}>
+                            <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900 text-center">
+                              {String(payment.paymentNo).padStart(2, '0')}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                              {payment.paymentDate}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                              ₹ {formatIndianNumber(payment.payment)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                              ₹ {formatIndianNumber(payment.principal)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                              ₹ {formatIndianNumber(payment.interest)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-base font-bold text-gray-900">
+                              ₹ {formatIndianNumber(payment.endingBalance)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="bg-white p-8 rounded-lg shadow-lg print-border">
-              <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                  <img src="https://raw.githubusercontent.com/dljs2001/Images/main/logo.png" alt="Logo" className="w-full h-24 object-contain" />
-                </div>
-
-                <div className="text-right mb-6">
-                  <p className="text-[#404040] font-bold">{formatDate(loanDetails.startDate)}</p>
-                  <p className="text-[#404040] font-bold">IDHADEL09559485</p>
-                </div>
-
-                <div className="mb-6">
-                  <p className="text-[#404040]">Dear Sir / Madam,</p>
-                  <p className="text-[#404040] font-bold">{loanDetails.name}</p>
-                </div>
-
-                <div className="mb-8 text-[#404040]">
-                  <p>
-                    <span className="font-normal">Certificate of Approved Loan No. </span>
-                    <span className="font-bold">IDHADEL09559485</span>
-                  </p>
-                  <p className="mt-4">
-                    We acknowledge the receipt of minimal documentation from your end, and we sincerely appreciate your choice of Dhani Finance as your financial partner. With reference to your recent loan application, we are pleased to extend to you the following loan offer, subject to the specified terms and conditions, with the first Equated Monthly Instalment (EMI) scheduled for:
-                  </p>
-                  <p className="mt-4 font-bold">{formatDate(firstEMIDate.toISOString())}</p>
-                </div>
-
-                <div className="space-y-4 text-[#404040]">
-                  <div className="flex">
-                    <span className="w-48">Approved Loan Amount</span>
-                    <span className="font-bold">₹ {formatIndianNumber(loanDetails.loanAmount)}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="w-48">Interest Rate</span>
-                    <span className="font-bold">{loanDetails.annualInterestRate}%</span>
-                  </div>
-                  <div className="flex">
-                    <span className="w-48">Loan Term</span>
-                    <span className="font-bold">{loanDetails.loanPeriodYears * 12} Months</span>
-                  </div>
-                  <div className="flex">
-                    <span className="w-48">Monthly Payment (EMI)</span>
-                    <span className="font-bold">₹ {formatIndianNumber(schedule[0]?.payment)}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="w-48">Total Interest Payable</span>
-                    <span className="font-bold">₹ {formatIndianNumber(totalInterest)}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="w-48">Processing Fees</span>
-                    <div className="flex items-center">
-                      <span className="mr-1">₹</span>
-                      <input
-                        type="number"
-                        name="processingFees"
-                        value={loanDetails.processingFees}
-                        onChange={handleInputChange}
-                        className="w-32 font-bold focus:outline-none text-[#404040]"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 text-[#404040]">
-                  <p className="mb-4">
-                    Please note that this loan offer is contingent upon your acceptance of the aforementioned terms and conditions. Should you wish to proceed with this loan, kindly respond to this communication at your earliest convenience.
-                  </p>
-                  <p className="mb-4">
-                    We look forward to serving your financial needs and fostering a long-lasting partnership with you. Should you have any questions or require further clarification, please do not hesitate to reach out to our dedicated customer service team.
-                  </p>
-                  <p>
-                    Thank you once again for choosing Dhani Finance as your trusted financial institution.
-                  </p>
-                </div>
-
-                <div className="mt-12 mb-4">
-                  <img 
-                    src="https://raw.githubusercontent.com/dljs2001/Images/refs/heads/main/sign.png"
-                    alt="Signature" 
-                    className="w-full h-auto mx-auto mb-8" 
+          </>
+        ) : (
+          <div className="flex flex-col items-center">
+            <div className="mb-4 flex gap-4">
+              <button
+                onClick={handleDownloadCertificate}
+                className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
+              >
+                <Download size={20} />
+                <span>Download Certificate</span>
+              </button>
+              <button
+                onClick={handleBackToLoanDetails}
+                className="flex items-center gap-2 bg-[#8B0000] text-white px-4 py-2 rounded-lg hover:bg-[#6B0000] transition-colors"
+              >
+                <span>Back to Loan Details</span>
+              </button>
+            </div>
+            <canvas ref={certificateCanvasRef} className="border shadow-lg max-w-full" />
+            
+            {/* Processing Fee Input Box */}
+            <div className="mt-6 bg-white p-4 rounded-lg shadow-md w-full max-w-md">
+              <div className="flex items-center justify-between">
+                <label htmlFor="processingFee" className="text-xl font-bold text-[#8B0000]">
+                  Processing Fee:
+                </label>
+                <div className="flex items-center">
+                  <span className="text-xl mr-1">₹</span>
+                  <input
+                    type="text"
+                    id="processingFee"
+                    name="processingFee"
+                    value={formatIndianNumber(loanDetails.processingFee)}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value.replace(/,/g, '')) || 0;
+                      handleInputChange({ target: { name: 'processingFee', value } });
+                    }}
+                    className="w-32 border border-gray-300 rounded px-2 py-1 text-xl font-bold focus:outline-none focus:ring-2 focus:ring-[#8B0000] text-right"
                   />
-                  <div className="text-[#404040] text-sm italic underline text-left font-bold space-y-1">
-                    <p>This is a system</p>
-                    <p>generated letter and</p>
-                    <p>hence does not require any</p>
-                    <p>signature.</p>
-                  </div>
-                </div>
-
-                <div className="mt-8 border-t border-[#08447F] pt-4 text-center">
-                  <p className="text-[#404040] text-sm italic font-bold">Corporate Offices:</p>
-                  <p className="text-[#404040] text-xs">
-                    One International Centre (Formerly IFC), Senapati Bapat Marg, Elphinstone Road, Mumbai - 400 013
-                  </p>
-                  <p className="text-[#404040] text-xs">
-                    5th Floor, Plot no. 108, IT Park, Udyog Vihar, Phase-1, Gurugram, Haryana-122016
-                  </p>
                 </div>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

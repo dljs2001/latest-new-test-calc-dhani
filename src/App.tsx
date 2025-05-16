@@ -220,8 +220,7 @@ function App() {
       ctx.font = 'bold 36px "Roboto"';  // Scale: 36px
       ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
       const dateText = `Date: ${new Date(loanDetails.startDate).toLocaleDateString('en-IN')}`;
-      ctx.fillText(dateText, 840, 280);
-      
+      ctx.fillText(dateText, 840, 380);
       
       // Draw certificate paragraph text
       ctx.font = 'bold 32px "Roboto"';  // Scale: 32px
@@ -364,6 +363,53 @@ function App() {
       
       footerY += 30; // Reduced from 50 to 30 for tighter spacing
       ctx.fillText(`${loanDetails.name}`, canvas.width - 100, footerY);
+      
+      // Load and draw the approved stamp image
+      const approvedImg = new Image();
+      approvedImg.onload = () => {
+        // Save the current context state
+        ctx.save();
+        
+        // Move to the position where we want to draw the image
+        ctx.translate(200, 1480);
+        
+        // Apply rotation (convert degrees to radians)
+        ctx.rotate(-15 * Math.PI / 180);
+        
+        // Apply scaling
+        ctx.scale(0.4, 0.4);
+        
+        // Draw the image centered at the origin point
+        ctx.drawImage(approvedImg, -approvedImg.width / 2, -approvedImg.height / 2);
+        
+        // Restore the context state
+        ctx.restore();
+      };
+      approvedImg.src = '/approved.png';
+      
+      // Load and draw the stamp image
+      const stampImg = new Image();
+      stampImg.onload = () => {
+        ctx.save();
+        ctx.translate(600, 1480);
+        ctx.rotate(+16 * Math.PI / 180);
+        ctx.scale(0.5, 0.5);
+        ctx.drawImage(stampImg, -stampImg.width / 2, -stampImg.height / 2);
+        ctx.restore();
+      };
+      stampImg.src = '/stamp.png';
+      
+      // Load and draw the signature image
+      const signatureImg = new Image();
+      signatureImg.onload = () => {
+        ctx.save();
+        ctx.translate(950, 1480);
+        ctx.rotate(-15 * Math.PI / 180);
+        ctx.scale(0.2, 0.2);
+        ctx.drawImage(signatureImg, -signatureImg.width / 2, -signatureImg.height / 2);
+        ctx.restore();
+      };
+      signatureImg.src = '/signature.png';
     };
     img.src = '/certificate_bg.png';
   };

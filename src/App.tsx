@@ -41,18 +41,18 @@ function App() {
 
   const formatIndianNumber = (num: number): string => {
     if (isNaN(num)) return '0';
-    
+
     const str = Math.abs(num).toString();
     let lastThree = str.substring(str.length - 3);
     let otherNumbers = str.substring(0, str.length - 3);
-    
+
     if (otherNumbers !== '') {
       lastThree = ',' + lastThree;
     }
-    
+
     // Place the comma after every 2 digits in the remaining part
     let formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
-    
+
     return num < 0 ? '-' + formatted : formatted;
   };
 
@@ -68,42 +68,58 @@ function App() {
   const numberToWords = (num: number): string => {
     const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
     const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-    
+
     const convertLessThanOneThousand = (n: number): string => {
       if (n === 0) return '';
       if (n < 20) return units[n];
       if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + units[n % 10] : '');
       return units[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertLessThanOneThousand(n % 100) : '');
     };
-    
+
     if (num === 0) return 'Zero';
-    
+
     let result = '';
     let crore = Math.floor(num / 10000000);
     let lakh = Math.floor((num % 10000000) / 100000);
     let thousand = Math.floor((num % 100000) / 1000);
     let remaining = num % 1000;
-    
+
     if (crore > 0) {
       result += convertLessThanOneThousand(crore) + ' Crore ';
     }
-    
+
     if (lakh > 0) {
       result += convertLessThanOneThousand(lakh) + ' Lakh ';
     }
-    
+
     if (thousand > 0) {
       result += convertLessThanOneThousand(thousand) + ' Thousand ';
     }
-    
+
     if (remaining > 0) {
       result += convertLessThanOneThousand(remaining);
     }
-    
+
     return result.trim();
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
+    // Log download to database
+    try {
+      await fetch('/api/log-download', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: loanDetails.name,
+          loanAmount: formatIndianNumber(loanDetails.loanAmount),
+        }),
+      });
+    } catch (error) {
+      console.error('Error logging download:', error);
+    }
+
     const content = contentRef.current;
     if (!content) return;
 
@@ -111,7 +127,7 @@ function App() {
       margin: 10,
       filename: `${loanDetails.name}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
+      html2canvas: {
         scale: 2,
         useCORS: true,
         allowTaint: true,
@@ -127,8 +143,8 @@ function App() {
   const calculateAmortizationSchedule = (details: LoanDetails): Payment[] => {
     const monthlyRate = details.annualInterestRate / 12 / 100;
     const numberOfPayments = details.loanPeriodYears * 12;
-    const monthlyPayment = (details.loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
-                          (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+    const monthlyPayment = (details.loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
+      (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
 
     let balance = details.loanAmount;
     const schedule: Payment[] = [];
@@ -141,7 +157,7 @@ function App() {
 
       const paymentDate = new Date(startDate);
       paymentDate.setMonth(startDate.getMonth() + i);
-      
+
       schedule.push({
         paymentNo: i,
         paymentDate: formatDate(paymentDate.toISOString()),
@@ -165,7 +181,7 @@ function App() {
 
   const [showCertificate, setShowCertificate] = useState(false);
   const certificateCanvasRef = useRef<HTMLCanvasElement>(null);
-  
+
   const handleViewCertificate = () => {
     setShowCertificate(true);
   };
@@ -177,7 +193,7 @@ function App() {
   const handleDownloadCertificate = () => {
     const canvas = certificateCanvasRef.current;
     if (!canvas) return;
-    
+
     // Create a temporary link element
     const link = document.createElement('a');
     link.download = `${loanDetails.name}_certificate.png`;
@@ -191,14 +207,14 @@ function App() {
   const drawCertificate = () => {
     const canvas = certificateCanvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     // Set canvas dimensions
     canvas.width = 1192;
     canvas.height = 1684;
-    
+
     // Calculate first EMI date (one month from start date)
     const emiDate = new Date(loanDetails.startDate);
     emiDate.setMonth(emiDate.getMonth() + 1);
@@ -207,42 +223,42 @@ function App() {
       month: 'short',
       year: '2-digit'
     });
-    
+
     // Load and draw background image
     const img = new Image();
     img.onload = async () => {
       // Ensure Roboto font is loaded before drawing
       await document.fonts.ready;
-      
+
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
+
       // Draw Date
       ctx.font = 'bold 36px "Roboto"';  // Scale: 36px
       ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
       const dateText = `Date: ${new Date(loanDetails.startDate).toLocaleDateString('en-IN')}`;
       ctx.fillText(dateText, 840, 380);
-      
+
       // Draw certificate paragraph text
       ctx.font = 'bold 32px "Roboto"';  // Scale: 32px
       ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
       ctx.textAlign = 'center';
-      
+
       // Draw "Dear Name" line
       ctx.fillText(`Dear, ${loanDetails.name}`, canvas.width / 2, 500);
-      
+
       // Draw Certificate title
       ctx.font = 'bold 36px "Roboto"';  // Scale: 36px
       ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
       ctx.fillText('Certificate of Approved Loan No. IDHADEL09559485', canvas.width / 2, 580);
-      
+
       // Draw paragraph text
       ctx.font = '28px "Roboto"';  // Scale: 28px
       ctx.fillStyle = '#000000';   // Hex: #000000 (Black)
-      
+
       // Break the paragraph into multiple lines
       const lineHeight = 40;
       let y = 660;
-      
+
       ctx.fillText('We acknowledge the receipt of minimal documentation from your end, and we', canvas.width / 2, y);
       y += lineHeight;
       ctx.fillText('sincerely appreciate your choice of Dhani Finance as your financial partner.', canvas.width / 2, y);
@@ -252,39 +268,39 @@ function App() {
       ctx.fillText('the following loan offer, subject to the specified terms and conditions, with the', canvas.width / 2, y);
       y += lineHeight;
       ctx.fillText('first Equated Monthly installment (EMI) scheduled for :', canvas.width / 2, y);
-      
+
       // Draw EMI date with emphasis
       y += lineHeight + 10;
       ctx.font = 'bold 32px "Roboto"';  // Scale: 32px
       ctx.fillStyle = '#8B0000';     // Hex: #8B0000 (Dark Red)
       ctx.fillText(formattedEmiDate, canvas.width / 2, y);
-      
+
       // Add 6 rounded cards below the EMI date
       y += lineHeight + 40;
-      
+
       // Calculate monthly payment
       const monthlyRate = loanDetails.annualInterestRate / 12 / 100;
       const numberOfPayments = loanDetails.loanPeriodYears * 12;
-      const monthlyPayment = (loanDetails.loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
-                            (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
-      
+      const monthlyPayment = (loanDetails.loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
+        (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+
       // Calculate total interest
       const totalInterest = schedule.reduce((sum, payment) => sum + payment.interest, 0);
-      
+
       // Calculate processing fee (1.38% of loan amount)
       // const processingFee = Math.round(loanDetails.loanAmount * 0.0138);
-      
+
       // With this:
       // Use the user-defined processing fee
       const processingFee = loanDetails.processingFee;
-      
+
       // Card dimensions and layout
       const cardWidth = 300;
       const cardHeight = 120;
       const cardSpacing = 30;
       const cardsPerRow = 3;
       const cornerRadius = 15;
-      
+
       // Card data
       const cards = [
         {
@@ -312,15 +328,15 @@ function App() {
           value: `₹ ${formatIndianNumber(processingFee)}`
         }
       ];
-      
+
       // Draw cards
       for (let i = 0; i < cards.length; i++) {
         const row = Math.floor(i / cardsPerRow);
         const col = i % cardsPerRow;
-        
+
         const cardX = (canvas.width - (cardWidth * cardsPerRow + cardSpacing * (cardsPerRow - 1))) / 2 + col * (cardWidth + cardSpacing);
         const cardY = y + row * (cardHeight + cardSpacing);
-        
+
         // Draw rounded rectangle for card
         ctx.beginPath();
         ctx.moveTo(cardX + cornerRadius, cardY);
@@ -333,60 +349,60 @@ function App() {
         ctx.lineTo(cardX, cardY + cornerRadius);
         ctx.quadraticCurveTo(cardX, cardY, cardX + cornerRadius, cardY);
         ctx.closePath();
-        
+
         // Fill card with dark red color
         ctx.fillStyle = '#8B0000';
         ctx.fill();
-        
+
         // Draw card title
         ctx.font = 'bold 20px "Roboto"';
         ctx.fillStyle = '#FFFFFF';
         ctx.textAlign = 'center';
         ctx.fillText(cards[i].title, cardX + cardWidth / 2, cardY + 35);
-        
+
         // Draw card value
         ctx.font = 'bold 24px "Roboto"';
         ctx.fillStyle = '#FFFFFF';
         ctx.fillText(cards[i].value, cardX + cardWidth / 2, cardY + 80);
       }
-      
+
       // Add the director and thank you text at the bottom
       ctx.textAlign = 'right';
       ctx.fillStyle = '#8B0000';
       let footerY = y + (Math.ceil(cards.length / cardsPerRow)) * (cardHeight + cardSpacing) + 200; // Increased from 80 to 200 to move down
-      
+
       ctx.font = 'bold 20px "Roboto"';
       ctx.fillText("Our director Mr. Sanjeev Kashyap", canvas.width - 100, footerY);
-      
+
       footerY += 30; // Reduced from 50 to 30 for tighter spacing
       ctx.fillText("Thank You for choosing us", canvas.width - 100, footerY);
-      
+
       footerY += 30; // Reduced from 50 to 30 for tighter spacing
       ctx.fillText(`${loanDetails.name}`, canvas.width - 100, footerY);
-      
+
       // Load and draw the approved stamp image
       const approvedImg = new Image();
       approvedImg.onload = () => {
         // Save the current context state
         ctx.save();
-        
+
         // Move to the position where we want to draw the image
         ctx.translate(200, 1480);
-        
+
         // Apply rotation (convert degrees to radians)
         ctx.rotate(-15 * Math.PI / 180);
-        
+
         // Apply scaling
         ctx.scale(0.4, 0.4);
-        
+
         // Draw the image centered at the origin point
         ctx.drawImage(approvedImg, -approvedImg.width / 2, -approvedImg.height / 2);
-        
+
         // Restore the context state
         ctx.restore();
       };
       approvedImg.src = '/approved.png';
-      
+
       // Load and draw the stamp image
       const stampImg = new Image();
       stampImg.onload = () => {
@@ -398,7 +414,7 @@ function App() {
         ctx.restore();
       };
       stampImg.src = '/stamp.png';
-      
+
       // Load and draw the signature image
       const signatureImg = new Image();
       signatureImg.onload = () => {
@@ -420,7 +436,7 @@ function App() {
       drawCertificate();
     }
   }, [showCertificate, loanDetails]);
-  
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -508,7 +524,7 @@ function App() {
                           value={loanDetails.startDate}
                           onChange={handleInputChange}
                           className="w-40 bg-transparent text-white text-xl font-bold focus:outline-none text-right"
-                          style={{ 
+                          style={{
                             color: "white",
                             colorScheme: "dark"
                           }}
@@ -637,7 +653,7 @@ function App() {
               </button>
             </div>
             <canvas ref={certificateCanvasRef} className="border shadow-lg max-w-full" />
-            
+
             {/* Processing Fee Input Box */}
             <div className="mt-6 bg-white p-4 rounded-lg shadow-md w-full max-w-md">
               <div className="flex items-center justify-between">

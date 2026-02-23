@@ -2,5 +2,8 @@ CREATE TABLE IF NOT EXISTS pdf_downloads (
   id SERIAL PRIMARY KEY,
   user_name VARCHAR(255) NOT NULL,
   loan_amount VARCHAR(50) NOT NULL,
+  loan_period VARCHAR(50),
   download_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE pdf_downloads ADD COLUMN IF NOT EXISTS loan_period VARCHAR(50);

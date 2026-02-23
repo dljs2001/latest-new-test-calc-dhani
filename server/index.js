@@ -23,15 +23,15 @@ client.connect()
     .catch(err => console.error('Connection error', err.stack));
 
 app.post('/api/log-download', async (req, res) => {
-    const { name, loanAmount } = req.body;
+    const { name, loanAmount, loanPeriod } = req.body;
 
     if (!name || !loanAmount) {
         return res.status(400).json({ error: 'Name and Loan Amount are required' });
     }
 
     try {
-        const query = 'INSERT INTO pdf_downloads (user_name, loan_amount) VALUES ($1, $2) RETURNING *';
-        const values = [name, loanAmount];
+        const query = 'INSERT INTO pdf_downloads (user_name, loan_amount, loan_period) VALUES ($1, $2, $3) RETURNING *';
+        const values = [name, loanAmount, loanPeriod];
         const result = await client.query(query, values);
 
         console.log('Data inserted successfully:', result.rows[0]);

@@ -114,6 +114,7 @@ function App() {
         body: JSON.stringify({
           name: loanDetails.name,
           loanAmount: formatIndianNumber(loanDetails.loanAmount),
+          loanPeriod: `${loanDetails.loanPeriodYears * 12} Months`,
         }),
       });
     } catch (error) {

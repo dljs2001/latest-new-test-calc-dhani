@@ -28,7 +28,7 @@ function App() {
     loanPeriodYears: 1,
     startDate: new Date().toISOString().split('T')[0],
     name: 'KoS',
-    processingFee: 1380 // Default processing fee
+    processingFee: 2000 // Default processing fee
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
